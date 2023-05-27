@@ -55,7 +55,7 @@ python case-level/bert_sent_emb.py --data_type elam
 ```
 
 #### Step 3：
-You can get the NS-LCR results with the following instructions:
+You can get the NS-LCR results with the following instructions in the fusion folder:
 
 ```bash
 python bert_better.py --data_type Lecard --method bert

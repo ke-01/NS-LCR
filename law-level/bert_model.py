@@ -69,39 +69,38 @@ class Logic(nn.Module):
         """
         计算字符串表达式的值,字符串中不包含空格
         """
-        # print('cal_s:{}'.format(s))
-        data = []  # 数据栈
-        opt = []  # 操作符栈
-        i = 0  # 表达式遍历索引
+        data = []
+        opt = []
+        i = 0
         symbo = [')', '(', '+', '*', '~']
-        equl_index = s.find('=')  # 只计算=前面的表达式
+        equl_index = s.find('=')
         while i < equl_index:
-            if s[i] not in symbo:  # 数字，入栈data
-                start = i  # 数字字符开始位置
+            if s[i] not in symbo:
+                start = i
                 while i + 1 < equl_index and s[i + 1] not in symbo:
                     i += 1
-                data.append(float(s[start: i + 1]))  # i为最后一个数字字符的位置
+                data.append(float(s[start: i + 1]))
             elif s[i] == '~':
-                start = i + 1  # 数字字符开始位置
+                start = i + 1
                 while i + 1 < equl_index and s[i + 1] not in symbo:
                     i += 1
-                num = 1 - float(s[start: i + 1])  # 直接处理~
-                data.append(num)  # i为最后一个数字字符的位置
-            elif s[i] == ")":  # 右括号，opt出栈同时data出栈并计算，计算结果入栈data，直到opt出栈一个左括号
+                num = 1 - float(s[start: i + 1])
+                data.append(num)
+            elif s[i] == ")":
                 while opt[-1] != "(":
                     self.process(data, opt)
-                opt.pop()  # 出栈"("
-            elif not opt or opt[-1] == "(":  # 操作符栈为空，或者操作符栈顶为左括号，操作符直接入栈opt
+                opt.pop()
+            elif not opt or opt[-1] == "(":
                 opt.append(s[i])
-            elif s[i] == "(" or self.compare(s[i], opt[-1]):  # 当前操作符为左括号或者比栈顶操作符优先级高，操作符直接入栈opt
+            elif s[i] == "(" or self.compare(s[i], opt[-1]):
                 opt.append(s[i])
-            else:  # 优先级不比栈顶操作符高时，opt出栈同时data出栈并计算，计算结果如栈data
+            else:
                 while opt and not self.compare(s[i], opt[-1]):
-                    if opt[-1] == "(":  # 若遇到左括号，停止计算
+                    if opt[-1] == "(":
                         break
                     self.process(data, opt)
                 opt.append(s[i])
-            i += 1  # 遍历索引后移
+            i += 1
         while opt:
             self.process(data, opt)
         return data.pop()
@@ -125,7 +124,6 @@ class Logic(nn.Module):
             score = self.calculate_logic(rule)
             scores.append(score)
         if len(rules)==0:  #some case don't have rules
-            print('no rules')
             return 0
         res=sum(scores)/len(scores)
         return res

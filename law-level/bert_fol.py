@@ -22,15 +22,11 @@ parser = argparse.ArgumentParser(description="Help info:")
 parser.add_argument('--model_path', type=str, default="/pretrain_model/bert_legal_criminal", help='model for bert')
 parser.add_argument('--label_path', type=str, default='../LeCaRD-main/data/label/test_label.json', help='Label file path.')
 parser.add_argument('--query_path', type=str,  default='../LeCaRD-main/data/query/test_query.json', help='query_path')
-parser.add_argument('--candidates_path', type=str,  default='../LeCaRD-main/data/candidates/test_laws', help='candidates_path')
+parser.add_argument('--candidates_path', type=str,  default='../LeCaRD-main/data/candidates/test', help='candidates_path')
 parser.add_argument('--logic_path', type=str,  default='./law_article_1_451.json', help='candidates_path')
-parser.add_argument('--ids2group_path', type=str,  default='./ids2group.json', help='candidates_path')
 parser.add_argument('--save_path', type=str,  default='../LeCaRD-main/data/prediction/Luka_fol_L_res.json', help='save path')
 parser.add_argument('--max_len', type=int, default=512, help='maxlen for input')
-parser.add_argument('--epoch', type=int, default=20, help='epoch for train')
 parser.add_argument('--batch_size', type=int, default=1, help='batch_size for train')
-parser.add_argument('--learning_rate', type=float, default=2e-5, help='learning_rate')
-parser.add_argument('--gradient_accumulation_steps', type=int, default=10, help='gradient_accumulation_steps')
 parser.add_argument('--data_type', type=str, default="Lecard",choices= ['Lecard','elam'], help='dataset choice')
 parser.add_argument('--best_model_path', type=str,  default='./predicate_best_model', help='best_model_path')
 args = parser.parse_args()
@@ -76,7 +72,7 @@ def _move_to_device(batch, device):
             batch[k] = v.to(device)
     return batch
 
-def train():
+def get_fol_res():
     model.eval()
     ans_dict = {}
     with torch.no_grad():
@@ -85,16 +81,14 @@ def train():
             query_id = batch['q_id']
             doc_id = batch['d_id']
             doc_id = doc_id.replace('.json', '')
-            # 对一个案例，有多个法条，每个法条多个谓词。对每个谓词得到一个结果，经过logic得到该法条结果，多个法条结果取析取
-            # 需要把法条对应的谓词输入得到的结果存入字典，之后用值替换，然后进行表达式求值
             rules_t = []
             for i in range(len(batch['input_ids'])):
-                # 对每个法条
+                # for each rule
                 p_mapping = batch['mapping'][i]
                 rules = batch['in_laws'][i]
 
                 for j, key in zip(range(len(batch['input_ids'][i])), p_mapping.keys()):
-                    # 对每个谓词
+                    # for each perdicate
                     sample = {}
                     sample['input_ids'], sample['attention_mask'], sample['token_type_ids'] = \
                         batch['input_ids'][i][j].to(device), \
@@ -102,7 +96,7 @@ def train():
                         batch['token_type_ids'][i][j].to(device)
                     score = model(sample)
                     p_mapping[key] = score.item()
-                # 上面循环结束得到对应谓词的得分存入p_mapping
+
                 for rule in rules:
                     for key, val in p_mapping.items():
                         rule = rule.replace(key, str(val))
@@ -122,4 +116,4 @@ def train():
         return 0
 
 if __name__ == '__main__':
-    train()
+    get_fol_res()

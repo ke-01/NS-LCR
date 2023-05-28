@@ -37,24 +37,18 @@ class SimilarLawDataSet(Dataset):
         return len(self.data_pair_list)
 
     def __getitem__(self, item):
-        # item表示第几个案例对,tx为doc,p是[[第一个法条的谓词],[]]，p_num为所有谓词
         tx, p,s_p_mapping,p_num, in_laws,label,q_id,d_id = self.data_pair_list[item]
-        # 返回多重列表
         x_list=[tx]*p_num
         x_num=0
         s_idss=[]
         s_type_idss=[]
         s_mask_ss=[]
-        # p是一个p的列表,[[第一个法条的谓词],[]]
         for ft in p:
-            # 对每个法条
             idss = []
             type_idss = []
             mask_ss = []
             for tp in ft:
-                # 对每个谓词
                 x=x_list[x_num]
-
                 x_num+=1
                 if len(x)+len(tp)>509:
                     if len(tp) > 29:
@@ -63,14 +57,7 @@ class SimilarLawDataSet(Dataset):
                     else:
                         t=len(tp)
                         x=x[:509-t]
-                # for lawformer
-                # if len(x) + len(p) > 4093:
-                #     if len(p) > 33:
-                #         p = p[:33]
-                #         x = x[:4060]
-                #     else:
-                #         t = len(p)
-                #         x = x[:4093 - t]
+
                 ids, type_ids = [], []
                 x_tokens, p_tokens = self.tokenizer.tokenize(x), self.tokenizer.tokenize(tp)
                 crime_tokens = ['[CLS]'] + x_tokens + ['[SEP]'] + p_tokens + ['[SEP]']
@@ -83,7 +70,6 @@ class SimilarLawDataSet(Dataset):
                 idss.append(ids)
                 type_idss.append(type_ids)
                 mask_ss.append(masks)
-                # label = torch.Tensor([label])
             s_idss.append(idss)
             s_type_idss.append(type_idss)
             s_mask_ss.append(mask_ss)
@@ -124,7 +110,6 @@ def read_pos_pairs(candidates_path, logic_path,querys, label_path,data_type):
     with open(logic_path, 'r', encoding='utf-8') as f:
         file = json.load(f)
     folders = os.listdir(candidates_path)
-    # print(folders)
     data_pair_list = []
 
     t_label={}#存对应的标签
@@ -165,30 +150,23 @@ def read_pos_pairs(candidates_path, logic_path,querys, label_path,data_type):
             doc_id=filename
             filename_t = filename.replace('.json', '')
             label_t=t_label[folder,filename_t]
-            # 对每个json文件
             with open(folder_path+'/'+filename, mode='r', encoding='utf-8')as f:
-                # print(filename)
                 js_dict = json.load(f)
             all_law = js_dict['laws']# 得到所有法条
             law_idx = []
             for i in all_law:
                 p = re.compile('第(?:十|百|零|一|二|三|四|五|六|七|八|九){1,10}条(?:之(?:一|二|三|四|五|六|七|八|九))?(?:第(?:十|百|零|一|二|三|四|五|六|七|八|九)款)?')
                 m = re.findall(pattern=p, string=i)
-                # print(m)# 存在m为0，即all_law为空
                 law_idx.append(m[0])
-            # law_idx 即去除前面的《》
             s_predic = []  # 得到对应的谓词存入列表
             p_sum = 0  # 统计该json文件所有法条对应的谓词一共多少个
             s_p_mapping = []  # 统计该json文件每个法条中谓词名称
             in_laws=[]  # 统计真实存在在logic文件中的laws,存当前候选案例的所有法条，每个法条应该有不同谓词，所以应该append
             for i in law_idx:
                 # 对每个法条
-                # law_one=[] #存当前法条的全部法条
                 predic=[] #得到当前法条对应的谓词
                 p_mapping = {} #可能加空的mapping进去
                 if i in file:  # 没有区分第几款，直接可以在法条里面索引出来的，加入全部谓词
-                    # print(file[i]['Rules'])
-                    # in_laws.append(file[i]['Rules'])  # 这样加入的是[[],[]]，访问法条多次,通过上面添加
                     law_one=[]
                     for ll in file[i]['Rules']:
                         law_one.extend(ll)
@@ -204,10 +182,7 @@ def read_pos_pairs(candidates_path, logic_path,querys, label_path,data_type):
                     idx = t[0] + '之一'
                     idx_k = to_num[t[1][1]] - 1
                     if idx in file:
-                        # in_laws.append(i)
                         if idx_k >= len(file[idx]['Rules']):
-                            # in_laws.append(file[idx]['Rules'][0])
-                            # in_laws.append(file[idx]['Rules'])
                             law_one = []
                             for ll in file[idx]['Rules']:
                                 law_one.extend(ll)
@@ -236,8 +211,6 @@ def read_pos_pairs(candidates_path, logic_path,querys, label_path,data_type):
                     idx_k = to_num[t[1][1]] - 1
                     if idx in file:
                         if idx_k >= len(file[idx]['Rules']):
-                            # in_laws.append(file[idx]['Rules'][0])
-                            # in_laws.append(file[idx]['Rules'])
                             law_one = []
                             for ll in file[idx]['Rules']:
                                 law_one.extend(ll)
@@ -263,10 +236,6 @@ def read_pos_pairs(candidates_path, logic_path,querys, label_path,data_type):
                 if len(predic) > 0:
                     s_predic.append(predic)
                     s_p_mapping.append(p_mapping)
-            if str(doc_id) =='641':
-                print(66)
             data_pair_list.append((query,s_predic,s_p_mapping,p_sum,in_laws,label_t,query_id,doc_id))
-            # data_pair_list.append((s_predic, s_p_mapping, p_sum, in_laws, label_t))
-        # s_predic:对一个候选案例的 [[第一个法条的谓词],[第二个...]]
 
     return data_pair_list

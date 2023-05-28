@@ -67,6 +67,8 @@ python bert_better.py --data_type ELAM --method bertpli
 python bert_better.py --data_type ELAM --method shaobert
 python bert_better.py --data_type ELAM --method lawformer
 ```
+Note:
+shaobert is another name for BERT-ts-L1.
 
 ### Requirements
 ```

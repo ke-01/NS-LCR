@@ -1,4 +1,4 @@
-## Bert baseline
+## BERT-PLI baseline
 First: You need to adjust the path of the dataset and the pre-trained model
 
 ## Train
